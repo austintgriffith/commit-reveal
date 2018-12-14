@@ -34,7 +34,6 @@ class App extends Component {
          }}
        />
       )
-      /*
       connectedDisplay.push(
         <ContractLoader
          key="ContractLoader"
@@ -69,43 +68,72 @@ class App extends Component {
             console.log("Transaction Receipt",transaction,receipt)
           }}
         />
-      )*/
-      /*
+      )
       if(contracts){
+
+        let reveals = []
+        for(let e in this.state.revealEvents){
+          reveals.push(
+            <span style={{color:"#FFFFFF",padding:5}}>
+              {this.state.revealEvents[e].random}
+            </span>
+          )
+        }
+
         contractsDisplay.push(
           <div key="UI" style={{padding:30}}>
             <div>
               <Address
                 {...this.state}
-                address={contracts.YOURCONTRACT._address}
+                address={contracts.CommitReveal._address}
               />
             </div>
-            broadcast string: <input
-                style={{verticalAlign:"middle",width:400,margin:6,maxHeight:20,padding:5,border:'2px solid #ccc',borderRadius:5}}
-                type="text" name="broadcastText" value={this.state.broadcastText} onChange={this.handleInput.bind(this)}
-            />
-            <Button color={this.state.doingTransaction?"orange":"green"} size="2" onClick={()=>{
-                this.setState({doingTransaction:true})
-                //tx(contracts.YOURCONTRACT.YOURFUNCTION(YOURARGUMENTS),(receipt)=>{
-                //  this.setState({doingTransaction:false})
-                //})
+            <Button size="2" onClick={async ()=>{
+                let reveal = this.state.web3.utils.sha3(""+Math.random())
+                let commit = await contracts.CommitReveal.getHash(reveal).call()
+                this.setState({reveal:reveal})
+                tx(contracts.CommitReveal.commit(commit),120000,0,0,(receipt)=>{
+                  if(receipt){
+                    console.log("COMMITTED:",receipt)
+                  }
+                })
               }}>
-              Send
+              Commit
             </Button>
             <Events
               config={{hide:false}}
-              contract={contracts.YOURCONTRACT}
-              eventName={"YOUREVENT"}
+              contract={contracts.CommitReveal}
+              eventName={"CommitHash"}
               block={block}
               onUpdate={(eventData,allEvents)=>{
                 console.log("EVENT DATA:",eventData)
-                this.setState({events:allEvents})
+                this.setState({commitEvents:allEvents})
               }}
             />
+            <Button size="2" onClick={async ()=>{
+                tx(contracts.CommitReveal.reveal(this.state.reveal),120000,0,0,(receipt)=>{
+                  if(receipt){
+                    console.log("REVEALED:",receipt)
+                  }
+                })
+              }}
+            >
+              Reveal
+            </Button>
+            <Events
+              config={{hide:false}}
+              contract={contracts.CommitReveal}
+              eventName={"RevealHash"}
+              block={block}
+              onUpdate={(eventData,allEvents)=>{
+                console.log("EVENT DATA:",eventData)
+                this.setState({revealEvents:allEvents})
+              }}
+            />
+            {reveals}
           </div>
         )
       }
-      */
     }
     return (
       <div className="App">
